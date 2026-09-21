@@ -14,7 +14,7 @@
 <footer><span>JARVIS • GEMINI CONNECTED</span><button class="mic" onclick="listen()">🎙</button><span>ASK ANYTHING</span></footer></div>
 <script>
 const synth=window.speechSynthesis,input=document.getElementById('input'),msgs=document.getElementById('messages');
-const API_URL=window.JARVIS_API_URL||'https://YOUR-BACKEND-URL/api/chat';let voices=[],voice=null;
+const API_URL=window.JARVIS_API_URL||'https://jarvis-flax-pi.vercel.app/api/chat';let voices=[],voice=null;
 function loadVoices(){voices=synth.getVoices();voice=voices.find(v=>/jarvis/i.test(v.name))||voices.find(v=>/daniel|alex|guy|david/i.test(v.name)&&/^en/i.test(v.lang))||voices.find(v=>/^en-US/i.test(v.lang)&&v.localService)||voices.find(v=>/^en/i.test(v.lang))||voices.find(v=>v.default)||voices[0]||null}loadVoices();if(synth.onvoiceschanged!==undefined)synth.onvoiceschanged=loadVoices;
 function add(text,type=''){const d=document.createElement('div');d.className='msg '+type;d.textContent=(type==='user'?'YOU: ':'JARVIS: ')+text;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;return d}
 function speak(text){if(!('speechSynthesis'in window))return;synth.cancel();const u=new SpeechSynthesisUtterance(text);u.voice=voice;u.lang='en-US';u.rate=.98;u.pitch=.8;u.volume=1;synth.speak(u)}
