@@ -5,7 +5,6 @@ import { GoogleGenAI } from '@google/genai';
 
 const app = express();
 const port = process.env.PORT || 3000;
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 app.use(cors({ origin: process.env.FRONTEND_ORIGIN || '*' }));
 app.use(express.json({ limit: '64kb' }));
@@ -17,30 +16,51 @@ app.get('/api/health', (_req, res) => {
 app.post('/api/chat', async (req, res) => {
   try {
     const message = typeof req.body?.message === 'string' ? req.body.message.trim() : '';
-    if (!message) return res.status(400).json({ error: 'Message is required.' });
-    if (message.length > 4000) return res.status(400).json({ error: 'Message is too long.' });
-    if (!process.env.GEMINI_API_KEY) return res.status(500).json({ error: 'Gemini API key is not configured on the server.' });
 
-    const interaction = await ai.interactions.create({
+    if (!message) {
+      return res.status(400).json({ error: 'Message is required.' });
+    }
+
+    if (message.length > 4000) {
+      return res.status(400).json({ error: 'Message is too long.' });
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: 'Gemini API key is not configured on the server.' });
+    }
+
+    const ai = new GoogleGenAI({ apiKey });
+
+    const response = await ai.models.generateContent({
       model: 'gemini-3.8-flash',
-      input: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `You are JARVIS, a concise, helpful browser assistant. Answer the user's question directly. Keep normal answers brief enough to be spoken aloud. Do not claim to have performed computer actions you cannot actually perform.\n\nUser: ${message}`
-            }
-          ]
-        }
-      ],
-      tools: [{ type: 'google_search' }]
+      contents: message,
+      config: {
+        systemInstruction:
+          'You are JARVIS, a concise, helpful browser assistant. Answer the user directly. Keep normal answers brief enough to be spoken aloud. Do not claim to have performed computer actions you cannot actually perform.',
+        tools: [{ googleSearch: {} }]
+      }
     });
 
-    res.json({ answer: interaction.output_text || 'I could not generate a response.' });
+    const answer = response.text?.trim();
+
+    if (!answer) {
+      return res.status(502).json({ error: 'Gemini returned an empty response.' });
+    }
+
+    res.json({ answer });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'JARVIS could not reach Gemini right now.' });
+    console.error('Gemini request failed:', error);
+
+    const detail =
+      error instanceof Error && error.message
+        ? error.message.replace(/AIza[\w-]+/g, '[redacted]')
+        : 'Unknown Gemini error';
+
+    res.status(500).json({
+      error: 'JARVIS could not reach Gemini right now.',
+      detail
+    });
   }
 });
 
