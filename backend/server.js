@@ -22,7 +22,7 @@ app.post('/api/chat', async (req, res) => {
     if (!process.env.GEMINI_API_KEY) return res.status(500).json({ error: 'Gemini API key is not configured on the server.' });
 
     const interaction = await ai.interactions.create({
-      model: 'gemini-3.6-flash',
+      model: 'gemini-3.8-flash',
       input: [
         {
           role: 'user',
