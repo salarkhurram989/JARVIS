@@ -1,0 +1,13 @@
+{
+  "name":"JARVIS AI HUD",
+  "short_name":"JARVIS",
+  "description":"JARVIS Gemini AI browser assistant",
+  "start_url":"./",
+  "display":"standalone",
+  "background_color":"#02070c",
+  "theme_color":"#02070c",
+  "orientation":"any",
+  "icons":[
+    {"src":"jarvis-icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
