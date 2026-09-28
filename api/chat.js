@@ -44,7 +44,13 @@ export default async function handler(req, res) {
               contents: [{
                 role: "user",
                 parts: [{ text: message }]
-              }]
+              }],
+              generationConfig: {
+                thinkingConfig: {
+                  thinkingLevel: "low"
+                },
+                maxOutputTokens: 300
+              }
             })
           }
         );
