@@ -14,7 +14,7 @@ ArchitecturesInstallIn64BitMode=x64compatible
 UninstallDisplayName=JARVIS PC Agent
 
 [Files]
-Source: "dist\JARVIS-PC-Agent.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\dist\JARVIS-PC-Agent.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{autodesktop}\JARVIS"; Filename: "{app}\JARVIS-PC-Agent.exe"; WorkingDir: "{app}"
