@@ -1,0 +1,29 @@
+name: Build JARVIS Windows Agent
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "desktop/**"
+      - ".github/workflows/build-agent.yml"
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build executable
+        shell: pwsh
+        run: |
+          py -m pip install --upgrade pip
+          py -m pip install pyinstaller psutil
+          pyinstaller --onefile --noconsole --name JARVIS-PC-Agent desktop/agent.py
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force package | Out-Null
+          Copy-Item dist/JARVIS-PC-Agent.exe package/
+          Copy-Item desktop/README.md package/
+          Compress-Archive -Path package/* -DestinationPath JARVIS-PC-Agent-Windows.zip -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: JARVIS-PC-Agent-Windows
+          path: JARVIS-PC-Agent-Windows.zip
