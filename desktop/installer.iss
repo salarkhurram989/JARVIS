@@ -2,7 +2,7 @@
 AppId={{8E6E1D8E-7C1E-4D3D-A8C0-JARVISPCAGENT}}
 AppName=JARVIS PC Agent
 AppVersion=2.0.0
-AppPublisher=SALARX
+AppPublisher=Salar Khurram
 DefaultDirName={autopf}\JARVIS PC Agent
 DefaultGroupName=JARVIS PC Agent
 OutputDir=installer
