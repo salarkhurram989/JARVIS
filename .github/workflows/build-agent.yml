@@ -15,7 +15,7 @@ jobs:
         run: |
           py -m pip install --upgrade pip
           py -m pip install pyinstaller psutil
-          pyinstaller --onefile --noconsole --name JARVIS-PC-Agent desktop/agent.py
+          py -m PyInstaller --onefile --noconsole --name JARVIS-PC-Agent desktop/agent.py
       - name: Package
         shell: pwsh
         run: |
