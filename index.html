@@ -11,18 +11,57 @@
 </style></head>
 <body><div class="app">
 <header><div class="logo">JAR<span>VIS</span></div><div class="online"><i class="dot"></i><span id="online">AI SYSTEM READY</span></div><div class="time"><div class="clock" id="clock">--:--:--</div><div class="date" id="date">---</div></div></header>
-<aside class="panel"><div class="title">SYSTEM STATUS</div><div class="metric"><small>CORE</small><b>ONLINE</b></div><div class="metric"><small>AI</small><b id="aiStatus">READY</b></div><div class="metric"><small>VOICE</small><b id="voiceStatus">READY</b></div><div class="title" style="margin-top:24px">SHORTCUTS</div><button id="installBtn" class="install" onclick="installApp()">⬇ INSTALL JARVIS</button><button class="btn" onclick="ask('What time is it?')">TIME</button><a class="linkbtn" href="https://www.google.com" target="_blank" rel="noopener">GOOGLE ↗</a><a class="linkbtn" href="https://www.youtube.com" target="_blank" rel="noopener">YOUTUBE ↗</a><a class="linkbtn" href="https://github.com" target="_blank" rel="noopener">GITHUB ↗</a></aside>
+<aside class="panel"><div class="title">SYSTEM STATUS</div><div class="metric"><small>CORE</small><b>ONLINE</b></div><div class="metric"><small>AI</small><b id="aiStatus">READY</b></div><div class="metric"><small>VOICE</small><b id="voiceStatus">READY</b></div><div class="metric"><small>PC AGENT</small><b id="agentStatus">OFFLINE</b></div><div class="title" style="margin-top:24px">SHORTCUTS</div><button id="installBtn" class="install" onclick="installApp()">⬇ INSTALL JARVIS</button><button class="btn" onclick="ask('What time is it?')">TIME</button><a class="linkbtn" href="https://www.google.com" target="_blank" rel="noopener">GOOGLE ↗</a><a class="linkbtn" href="https://www.youtube.com" target="_blank" rel="noopener">YOUTUBE ↗</a><a class="linkbtn" href="https://github.com" target="_blank" rel="noopener">GITHUB ↗</a></aside>
 <main class="center"><div class="coreinfo"><strong>JARVIS CORE</strong><span>GEMINI AI • ACTIVE</span></div><div class="hud"><div class="ticks"></div></div><div class="reactor"></div><div class="messages" id="messages"></div><div class="chat"><input id="input" placeholder="Ask JARVIS anything..."><button class="send" onclick="ask()">SEND</button></div></main>
 <aside class="panel"><div class="title">ASSISTANT</div><div class="metric"><small>MODE</small><b>JARVIS AI</b></div><div class="metric"><small>MODEL</small><b>GEMINI</b></div><div class="metric"><small>SEARCH</small><b>GROUNDED</b></div><div class="title" style="margin-top:24px">VOICE CONTROL</div><button class="btn" onclick="listen()">🎙 START LISTENING</button><button class="btn" onclick="testVoice()">🔊 TEST VOICE</button><a class="linkbtn" href="https://aivoicelab.net/en/role/jarvis-voice" target="_blank" rel="noopener">JARVIS VOICE ↗</a></aside>
 <footer><span>JARVIS • GEMINI CONNECTED</span><button class="mic" onclick="listen()">🎙</button><span>ASK ANYTHING</span></footer></div>
 <script>
 const synth=window.speechSynthesis,input=document.getElementById('input'),msgs=document.getElementById('messages');
-const API_URL=window.JARVIS_API_URL||'https://jarvis-flax-pi.vercel.app/api/chat';let voices=[],voice=null;
+const API_URL=window.JARVIS_API_URL||'https://jarvis-flax-pi.vercel.app/api/chat';const AGENT_URL=window.JARVIS_AGENT_URL||'http://127.0.0.1:8765';let voices=[],voice=null;
 function loadVoices(){voices=synth.getVoices();voice=voices.find(v=>/jarvis/i.test(v.name))||voices.find(v=>/daniel|alex|guy|david/i.test(v.name)&&/^en/i.test(v.lang))||voices.find(v=>/^en-US/i.test(v.lang)&&v.localService)||voices.find(v=>/^en/i.test(v.lang))||voices.find(v=>v.default)||voices[0]||null}loadVoices();if(synth.onvoiceschanged!==undefined)synth.onvoiceschanged=loadVoices;
 function add(text,type=''){const d=document.createElement('div');d.className='msg '+type;d.textContent=(type==='user'?'YOU: ':'JARVIS: ')+text;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;return d}
 function speak(text){if(!('speechSynthesis'in window))return;synth.cancel();const u=new SpeechSynthesisUtterance(text);u.voice=voice;u.lang='en-US';u.rate=.98;u.pitch=.8;u.volume=1;synth.speak(u)}
 function testVoice(){speak('Good to see you. How may I assist?')}
-async function ask(text){text=(text??input.value).trim();if(!text)return;input.value='';add(text,'user');document.getElementById('aiStatus').textContent='THINKING';document.getElementById('online').textContent='PROCESSING';const wait=add('Processing your request...','thinking');try{if(API_URL.includes('YOUR-BACKEND-URL'))throw new Error('Backend URL is not configured yet.');const response=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text})});const data=await response.json();if(!response.ok){const detail=data.detail?(' '+data.detail):'';throw new Error((data.error||('Backend request failed ('+response.status+').'))+detail);}wait.remove();add(data.answer||'I could not generate a response.');speak(data.answer||'I could not generate a response.')}catch(err){wait.remove();add(err.message,'error');speak('I cannot reach my Gemini backend yet.')}finally{document.getElementById('aiStatus').textContent='READY';document.getElementById('online').textContent='AI SYSTEM READY'}}
+async function pcCommand(command){
+  try{
+    const r=await fetch(AGENT_URL+'/command',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({command})});
+    const d=await r.json();
+    if(!r.ok||d.type==='unknown') return null;
+    if(d.type==='system'){
+      const s=d.data||{};
+      return 'PC: '+(s.computer||'unknown')+'. Windows: '+(s.windows||'unknown')+'. RAM: '+(s.ram_gb||'?')+' GB, '+(s.ram_used_percent||'?')+'% used. Free disk: '+(s.disk_free_gb||'?')+' GB.';
+    }
+    if(d.type==='files') return (d.message||'Files found.')+(d.results&&d.results.length?' '+d.results.slice(0,8).join(' | '):'');
+    if(d.type==='memory') return d.items&&d.items.length ? 'Local memory: '+d.items.map(x=>x.text).join(' | ') : 'Local memory is empty.';
+    return d.message||'Command completed.';
+  }catch(e){ return null; }
+}
+async function probeAgent(){
+  try{const r=await fetch(AGENT_URL+'/health',{cache:'no-store'});if(!r.ok)throw 0;document.getElementById('agentStatus').textContent='ONLINE';return true}
+  catch(e){document.getElementById('agentStatus').textContent='OFFLINE';return false}
+}
+function looksLocal(t){
+  const l=t.toLowerCase();
+  return l==='system scan'||l==='scan my pc'||l==='pc status'||l==='system status'||l.startsWith('open ')||l.startsWith('find ')||l.startsWith('search for ')||l.startsWith('remember ')||l==='what do you remember'||l==='show memory'||l==='my memory'||l.startsWith('google ')||l.startsWith('git status')||l.startsWith('dev status');
+}
+async function ask(text){
+  text=(text??input.value).trim();if(!text)return;input.value='';add(text,'user');
+  document.getElementById('aiStatus').textContent='THINKING';document.getElementById('online').textContent='PROCESSING';
+  const wait=add('Processing your request...','thinking');
+  try{
+    if(looksLocal(text)){
+      const local=await pcCommand(text);
+      if(local){wait.remove();add(local);speak(local);return}
+      if(!await probeAgent()){wait.remove();add('Local PC agent is offline. Install and start JARVIS PC Agent, then try again.','error');speak('The local PC agent is offline.');return}
+    }
+    if(API_URL.includes('YOUR-BACKEND-URL'))throw new Error('Backend URL is not configured yet.');
+    const response=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text})});
+    const data=await response.json();
+    if(!response.ok){const detail=data.detail?(' '+data.detail):'';throw new Error((data.error||('Backend request failed ('+response.status+').'))+detail)}
+    wait.remove();add(data.answer||'I could not generate a response.');speak(data.answer||'I could not generate a response.');
+  }catch(err){wait.remove();add(err.message,'error');speak('I could not complete that request.')}
+  finally{document.getElementById('aiStatus').textContent='READY';document.getElementById('online').textContent='AI SYSTEM READY'}
+}
 input.addEventListener('keydown',e=>{if(e.key==='Enter')ask()});
 function listen(){const S=window.SpeechRecognition||window.webkitSpeechRecognition;if(!S){add('Voice recognition is not supported here. Please use Chrome.','error');return}const r=new S();r.lang='en-US';r.interimResults=false;r.continuous=false;document.getElementById('voiceStatus').textContent='LISTENING';r.onresult=e=>{input.value=e.results[0][0].transcript;ask()};r.onerror=()=>document.getElementById('voiceStatus').textContent='READY';r.onend=()=>document.getElementById('voiceStatus').textContent='READY';r.start()}
 let deferredInstallPrompt=null;
@@ -30,5 +69,5 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredIns
 window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;document.getElementById('installBtn').classList.remove('show');document.getElementById('online').textContent='JARVIS INSTALLED'});
 async function installApp(){if(!deferredInstallPrompt)return;deferredInstallPrompt.prompt();const choice=await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;if(choice.outcome==='accepted')document.getElementById('installBtn').classList.remove('show')}
 if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
-function tick(){const d=new Date();document.getElementById('clock').textContent=d.toLocaleTimeString();document.getElementById('date').textContent=d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'})}setInterval(tick,1000);tick();add('Systems initialized. Gemini AI interface standing by.');
+probeAgent();setInterval(probeAgent,5000);function tick(){const d=new Date();document.getElementById('clock').textContent=d.toLocaleTimeString();document.getElementById('date').textContent=d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'})}setInterval(tick,1000);tick();add('Systems initialized. Gemini AI interface standing by.');
 </script></body></html>
