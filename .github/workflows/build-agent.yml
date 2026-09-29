@@ -29,11 +29,11 @@ jobs:
         run: |
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" desktop\installer.iss
 
-      - name: Upload installer
+      - name: Upload JARVIS Setup
         uses: actions/upload-artifact@v4
         with:
           name: JARVIS-Setup-Windows
-          path: installer\JARVIS-Setup.exe
+          path: desktop\installer\JARVIS-Setup.exe
 
       - name: Upload portable agent
         uses: actions/upload-artifact@v4
