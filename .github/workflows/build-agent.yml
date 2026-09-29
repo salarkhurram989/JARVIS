@@ -27,3 +27,4 @@ jobs:
         with:
           name: JARVIS-PC-Agent-Windows
           path: JARVIS-PC-Agent-Windows.zip
+# Build the packaged Windows agent for end users.
