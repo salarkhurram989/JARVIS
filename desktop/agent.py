@@ -1,4 +1,4 @@
-import json, os, platform, socket, subprocess, webbrowser
+import json, os, platform, socket, subprocess, webbrowser, shutil, time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 HOST = "127.0.0.1"; PORT = 8765
@@ -19,18 +19,35 @@ def system():
     except Exception: pass
     return d
 def find(term):
-    out=[]; term=term.lower(); root=os.path.expanduser("~")
-    for base,dirs,files in os.walk(root):
-        dirs[:]=[x for x in dirs if x not in ("AppData","$Recycle.Bin","System Volume Information")]
-        for n in files:
-            if term in n.lower(): out.append(os.path.join(base,n))
-            if len(out)>=40: return out
+    out=[]; term=term.lower().strip()
+    home=os.path.expanduser("~")
+    roots=[os.path.join(home,x) for x in ("Desktop","Documents","Downloads")]
+    roots=[x for x in roots if os.path.isdir(x)]
+    for root in roots:
+        for base,dirs,files in os.walk(root):
+            dirs[:]=[x for x in dirs if x not in ("AppData","$Recycle.Bin","System Volume Information",".git","node_modules","__pycache__")]
+            for n in files:
+                if term in n.lower():
+                    out.append(os.path.join(base,n))
+                    if len(out)>=40: return out
     return out
+
+def launch(target):
+    key=target.lower().strip()
+    aliases={"chrome":"chrome","google chrome":"chrome","edge":"msedge","notepad":"notepad",
+             "calculator":"calc","calc":"calc","explorer":"explorer","vscode":"code"}
+    exe=aliases.get(key,key)
+    found=shutil.which(exe) or shutil.which(exe+".exe")
+    if found:
+        subprocess.Popen([found],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        return True
+    return False
 def command(c):
     t=c.strip(); l=t.lower()
     if l in ("system scan","scan my pc","pc status","system status"): return {"ok":True,"type":"system","data":system()}
     if l.startswith("open "):
         target=t[5:].strip(); key=target.lower()
+        if launch(target): return {"ok":True,"message":"Opening "+target+"."}
         if key in APPS:
             for p in APPS[key]:
                 if os.path.exists(p) or p in ("notepad.exe","calc.exe","explorer.exe"): subprocess.Popen([p],shell=False); return {"ok":True,"message":"Opening "+key+"."}
