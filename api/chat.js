@@ -49,7 +49,7 @@ export default async function handler(req, res) {
                 thinkingConfig: {
                   thinkingLevel: "low"
                 },
-                maxOutputTokens: 300
+                maxOutputTokens: 220
               }
             })
           }
